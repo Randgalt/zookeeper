@@ -31,6 +31,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
@@ -44,6 +45,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
     @Before
     public void setup() {
         ClientBase.setupTestEnv();
+        QuorumPeerConfig.setReconfigEnabled(true);
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
     /**
@@ -75,7 +79,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Start the servers with a static config file, without a dynamic
         // config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, "participant", false);
             // check that a dynamic configuration file doesn't exist
             Assert.assertEquals( mt[i].getDynamicFiles().length, 0 );
             mt[i].start();
@@ -93,10 +97,12 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             // check that static config file doesn't include membership info
             // and has a pointer to the dynamic configuration file
+            // check that static config file doesn't include peerType info
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
             for (int j = 0; j < SERVER_COUNT; j++) {
-                Assert.assertFalse(cfg.containsKey("server." + j));
+                Assert.assertFalse(cfg.containsKey("server." + j));                
             }
+            Assert.assertFalse(cfg.containsKey("peerType"));
             Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
             Assert.assertFalse(cfg.containsKey("clientPort"));
 
@@ -174,6 +180,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
         MainThread mt[] = new MainThread[SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
+        ZooKeeperAdmin zkAdmin[] = new ZooKeeperAdmin[SERVER_COUNT];
 
         // Start the servers with a static config file, without a dynamic config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
@@ -188,6 +195,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
+            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+            zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
 
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
@@ -197,7 +207,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
-        ReconfigTest.reconfig(zk[1], null, null, newServers, -1);
+        ReconfigTest.reconfig(zkAdmin[1], null, null, newServers, -1);
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
         // Sleep since writing the config files may take time.
@@ -220,6 +230,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
             zk[i].close();
+            zkAdmin[i].close();
         }
     }
 
