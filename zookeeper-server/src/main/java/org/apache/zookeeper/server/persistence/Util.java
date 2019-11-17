@@ -97,7 +97,7 @@ public class Util {
     }
 
     /**
-     * Extracts snapshot directory property value from the container.
+     * Extracts snapshot directory property value from the container
      *
      * @param props properties container
      * @return file representing the snapshot directory

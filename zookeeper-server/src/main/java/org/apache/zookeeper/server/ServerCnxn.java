@@ -138,7 +138,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     private volatile boolean invalid = false;
 
-    abstract int getSessionTimeout();
+    public abstract int getSessionTimeout();
 
     public void incrOutstandingAndCheckThrottle(RequestHeader h) {
         if (h.getXid() <= 0) {
@@ -165,6 +165,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         sendResponse(h, r, tag, null, null);
+    }
+
+    public ZooKeeperServer getZooKeeperServer() {
+        return zkServer;
     }
 
     protected byte[] serializeRecord(Record record) throws IOException {
@@ -224,7 +228,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract long getSessionId();
 
-    abstract void setSessionId(long sessionId);
+    public abstract void setSessionId(long sessionId);
 
     /** auth info for the cnxn, returns an unmodifyable list */
     public List<Id> getAuthInfo() {
@@ -239,17 +243,17 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return authInfo.remove(id);
     }
 
-    abstract void sendBuffer(ByteBuffer... buffers);
+    public abstract void sendBuffer(ByteBuffer... buffers);
 
-    abstract void enableRecv();
+    public abstract void enableRecv();
 
     void disableRecv() {
         disableRecv(true);
     }
 
-    abstract void disableRecv(boolean waitDisableRecv);
+    public abstract void disableRecv(boolean waitDisableRecv);
 
-    abstract void setSessionTimeout(int sessionTimeout);
+    public abstract void setSessionTimeout(int sessionTimeout);
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 

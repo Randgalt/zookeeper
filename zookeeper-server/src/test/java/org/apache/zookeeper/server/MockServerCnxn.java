@@ -37,7 +37,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    int getSessionTimeout() {
+    public int getSessionTimeout() {
         return 0;
     }
 
@@ -63,7 +63,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void setSessionId(long sessionId) {
+    public void setSessionId(long sessionId) {
     }
 
     @Override
@@ -82,19 +82,19 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void sendBuffer(ByteBuffer... closeConn) {
+    public void sendBuffer(ByteBuffer... closeConn) {
     }
 
     @Override
-    void enableRecv() {
+    public void enableRecv() {
     }
 
     @Override
-    void disableRecv(boolean waitDisableRecv) {
+    public void disableRecv(boolean waitDisableRecv) {
     }
 
     @Override
-    void setSessionTimeout(int sessionTimeout) {
+    public void setSessionTimeout(int sessionTimeout) {
     }
 
     @Override

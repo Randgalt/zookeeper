@@ -103,6 +103,15 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
+      <directory>${project.basedir}/../zookeeper-grpc</directory>
+      <excludes>
+        <exclude>**/target/**</exclude>
+      </excludes>
+      <outputDirectory>zookeeper-server</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
       <directory>${project.basedir}/..</directory>
       <outputDirectory>.</outputDirectory>
       <includes>

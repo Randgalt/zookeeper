@@ -1,0 +1,300 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.apache.zookeeper.grpc.generated";
+
+package zookeeper;
+
+enum RpcKeeperException {
+    Ok = 0;
+    SystemError = 1;
+    RuntimeInconsistencyError = 2;
+    DataInconsistencyError = 3;
+    ConnectionLossError = 4;
+    MarshallingError = 5;
+    UnimplementedError = 6;
+    OperationTimeoutError = 7;
+    NewConfigNoQuorumError = 8;
+    ReconfigInProgressError = 9;
+    BadArgumentsError = 10;
+    ApiError = 11;
+    NoNodeError = 12;
+    NoAuthError = 13;
+    BadVersionError = 14;
+    NoChildrenForEphemeralsError = 15;
+    NodeExistsError = 16;
+    InvalidAclError = 17;
+    AuthFailedError = 18;
+    NotEmptyError = 19;
+    SessionExpiredError = 20;
+    InvalidCallbackError = 21;
+    SessionMovedError = 22;
+    NotReadonlyError = 23;
+    EphemeralOnLocalSessionError = 24;
+    NoWatcherError = 25;
+    ReconfigDisabledError = 26;
+    SessionClosedRequireSaslAuthError = 27;
+    RequestTimeoutError = 28;
+    UnknownSessionError = 29;
+}
+
+enum RpcKeeperState {
+    Disconnected = 0;
+    SyncConnected = 1;
+    AuthFailed = 2;
+    ConnectedReadOnly = 3;
+    SaslAuthenticated = 4;
+    Expired = 5;
+    Closed = 6;
+}
+
+enum RpcEventType {
+    None = 0;
+    NodeCreated = 1;
+    NodeDeleted = 2;
+    NodeDataChanged = 3;
+    NodeChildrenChanged = 4;
+    DataWatchRemoved = 5;
+    ChildWatchRemoved = 6;
+    PersistentWatchRemoved = 7;
+}
+
+enum RpcWatcherType {
+    WatcherTypeChildren = 0;
+    WatcherTypeData = 1;
+    WatcherTypeAny = 2;
+}
+
+enum RpcCreateMode {
+    Persistent = 0;
+    PersistentSequential = 1;
+    Ephemeral = 2;
+    EphemeralSequential = 3;
+    Container = 4;
+    PersistentWithTtl = 5;
+    PersistentSequentialWithTtl = 6;
+}
+
+enum RpcAddWatchMode {
+    PersistentWatch = 0;
+    PersistentRecursiveWatch = 1;
+}
+
+message RpcWatchedEvent {
+    RpcKeeperState keeperState = 1;
+    RpcEventType eventType = 2;
+    string path = 3;
+}
+
+message RpcResponseHeader {
+    int32 xid = 1;
+    int64 zxid = 2;
+    RpcKeeperException exception = 3;
+}
+
+message RpcRequestHeader {
+    int32 xid = 1;
+}
+
+message RpcId {
+    string scheme = 1;
+    string id = 2;
+}
+
+enum RpcPerms {
+    Read = 0;
+    Write = 1;
+    Create = 2;
+    Delete = 3;
+    Admin = 4;
+    All = 5;
+}
+
+message RpcAcl {
+    repeated RpcPerms perms = 1;
+    RpcId id = 2;
+}
+
+message RpcSession {
+    int64 sessionId = 1;
+}
+
+message RpcStat {
+    int64 czxid = 1;
+    int64 mzxid = 2;
+    int64 ctime = 3;
+    int64 mtime = 4;
+    int32 version = 5;
+    int32 cversion = 6;
+    int32 aversion = 7;
+    int64 ephemeralOwner = 8;
+    int32 dataLength = 9;
+    int32 numChildren = 10;
+    int64 pzxid = 11;
+
+}
+
+message RpcConnectRequest {
+    int64 lastZxidSeen = 1;
+    int32 timeOut = 2;
+    int64 sessionId = 3;
+    bytes passwd = 4;
+    bool readOnly = 5;
+}
+
+message RpcConnectResponse {
+    int64 sessionId = 1;
+    int32 sessionTimeout = 2;
+}
+
+message RpcCreateRequest {
+    string path = 1;
+    bytes data = 2;
+    repeated RpcAcl acl = 3;
+    RpcCreateMode mode = 4;
+    int64 ttl = 5;
+}
+
+message RpcCreateResponse {
+    string path = 1;
+    RpcStat stat = 2;
+}
+
+message RpcGetDataRequest {
+    string path = 1;
+    bool watch = 2;
+}
+
+message RpcGetDataResponse {
+    bytes data = 1;
+    RpcStat stat = 2;
+}
+
+message RpcSetDataRequest {
+    string path = 1;
+    bytes data = 2;
+    int32 version = 3;
+}
+
+message RpcSetDataResponse {
+    RpcStat stat = 1;
+}
+
+message RpcGetChildrenRequest {
+    string path = 1;
+    bool watch = 2;
+}
+
+message RpcGetChildrenResponse {
+    repeated string children = 1;
+    RpcStat stat = 2;
+}
+
+message RpcDeleteRequest {
+    string path = 1;
+    int32 version = 2;
+}
+
+message RpcAuthInfo {
+    string scheme = 1;
+    bytes auth = 2;
+}
+
+message RpcExistsRequest {
+    string path = 1;
+    bool watch = 2;
+}
+
+message RpcGetAclRequest {
+    string path = 1;
+}
+
+message RpcGetAclResponse {
+    repeated RpcAcl acl = 1;
+    RpcStat stat = 2;
+}
+
+message RpcSetAclRequest {
+    string path = 1;
+    repeated RpcAcl acl = 2;
+    int32 version = 3;
+}
+
+message RpcSetAclResponse {
+    RpcStat stat = 1;
+}
+
+message RpcGetAllChildrenNumberRequest {
+    string path = 1;
+}
+
+message RpcGetAllChildrenNumberResponse {
+    int32 totalNumber = 1;
+}
+
+message RpcGetEphemeralsRequest {
+    string prefixPath = 1;
+}
+
+message RpcGetEphemeralsResponse {
+    repeated string ephemerals = 1;
+}
+
+message RpcErrorResponse {
+    int32 err = 1;
+}
+
+message RpcAddWatchRequest {
+    string path = 1;
+    RpcAddWatchMode mode = 2;
+}
+
+message RpcSyncRequest {
+    string path = 1;
+}
+
+message RpcSyncResponse {
+    string path = 1;
+}
+
+message RpcRequest {
+    RpcRequestHeader header = 1;
+    oneof detail {
+        RpcConnectRequest connect = 2;
+        RpcCreateRequest create = 3;
+        RpcGetDataRequest getData = 4;
+        RpcSetDataRequest setData = 5;
+        RpcGetChildrenRequest getChildren = 6;
+        RpcDeleteRequest delete = 7;
+        RpcAuthInfo auth = 8;
+        RpcExistsRequest exists = 9;
+        RpcGetAclRequest getAcl = 10;
+        RpcSetAclRequest setAcl = 11;
+        RpcGetAllChildrenNumberRequest getAllChildrenNumber = 12;
+        RpcGetEphemeralsRequest getEphemerals = 13;
+        RpcAddWatchRequest addWatch = 14;
+        RpcSyncRequest sync = 15;
+    }
+}
+
+message RpcResponse {
+    RpcResponseHeader header = 1;
+    oneof detail {
+        RpcConnectResponse connect = 2;
+        RpcCreateResponse create = 3;
+        RpcGetDataResponse getData = 4;
+        RpcSetDataResponse setData = 5;
+        RpcGetChildrenResponse getChildren = 6;
+        RpcWatchedEvent watchedEvent = 7;
+        RpcGetAclResponse getAcl = 8;
+        RpcSetAclResponse setAcl = 9;
+        RpcGetAllChildrenNumberResponse getAllChildrenNumber = 10;
+        RpcGetEphemeralsResponse getEphemerals = 13;
+        RpcErrorResponse error = 14;
+        RpcSyncResponse sync = 15;
+    }
+}
+
+service ZooKeeperService {
+    rpc process (stream RpcRequest) returns (stream RpcResponse);
+}
