@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -157,9 +158,12 @@ public class DataTree {
     private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
-     * This set contains the paths of all ttl nodes
+     * This set contains the paths of all ttl nodes - IMPORTANT: usages of
+     * {@code ttls} and {@code invertedTtls} must be synchronized on the parent node
+     * of the TTL node being operated on
      */
-    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Map<String, Long> ttls = new ConcurrentHashMap<>();
+    private final Map<Long, Collection<String>> invertedTtls = new ConcurrentSkipListMap<>();
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
@@ -202,8 +206,8 @@ public class DataTree {
         return new HashSet<String>(containers);
     }
 
-    public Set<String> getTtls() {
-        return new HashSet<String>(ttls);
+    public Iterable<Collection<String>> getInvertedTtls() {
+        return invertedTtls.values();
     }
 
     public Collection<Long> getSessions() {
@@ -519,7 +523,7 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.add(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.add(path);
+                setTtlNode(path, stat.getEphemeralOwner(), time);
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
@@ -610,7 +614,7 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.remove(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.remove(path);
+                unsetTtlNode(path);
             } else if (eowner != 0) {
                 Set<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
@@ -673,6 +677,20 @@ public class DataTree {
             n.copyStat(s);
             nodes.postChange(path, n);
         }
+
+        EphemeralType ephemeralType = EphemeralType.get(n.stat.getEphemeralOwner());
+        if (ephemeralType == EphemeralType.TTL) {
+            int lastSlash = path.lastIndexOf('/');
+            String parentName = path.substring(0, lastSlash);
+            DataNode parent = nodes.get(parentName);
+            if (parent == null) {
+                throw new KeeperException.NoNodeException();    // can this ever happen?
+            }
+            synchronized (parent) {
+                setTtlNode(path, n.stat.getEphemeralOwner(), n.stat.getMtime());
+            }
+        }
+
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
@@ -1209,6 +1227,30 @@ public class DataTree {
 
     }
 
+    // must be synchronized on the parent node of the TTL node being operated on
+    private void unsetTtlNode(String path) {
+        updateInvertedTtlNode(path, ttls.remove(path));
+    }
+
+    // must be synchronized on the parent node of the TTL node being operated on
+    private void updateInvertedTtlNode(String path, Long expiration) {
+        if (expiration != null) {
+            invertedTtls.computeIfPresent(expiration, (__, nodes) -> {
+                nodes.remove(path);
+                return nodes.isEmpty() ? null : nodes;
+            });
+        }
+    }
+
+    // must be synchronized on the parent node of the TTL node being operated on
+    private void setTtlNode(String path, long ephemeralOwner, long time) {
+        Long expiration = time + EphemeralType.TTL.getValue(ephemeralOwner);
+        updateInvertedTtlNode(path, ttls.put(path, expiration));
+
+        Collection<String> nodes = invertedTtls.computeIfAbsent(expiration, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        nodes.add(path);
+    }
+
     /**
      * this method gets the count of nodes and the bytes under a subtree
      *
@@ -1403,7 +1445,7 @@ public class DataTree {
                 if (ephemeralType == EphemeralType.CONTAINER) {
                     containers.add(path);
                 } else if (ephemeralType == EphemeralType.TTL) {
-                    ttls.add(path);
+                    setTtlNode(path, node.stat.getEphemeralOwner(), node.stat.getMtime());
                 } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {

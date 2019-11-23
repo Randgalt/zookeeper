@@ -248,6 +248,41 @@ public class CreateTTLTest extends ClientBase {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
     }
 
+    @Test
+    public void testTTLRankByMTimeAsc() throws KeeperException, InterruptedException {
+        Stat stat = new Stat();
+        String path = "/testTTLRankByMTimeAsc";
+        int nodeCount = 10;
+        for (int i = 1; i <= nodeCount; i++) {
+            zk.create(path + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, i * 100);
+            assertEquals(0, stat.getEphemeralOwner());
+        }
+
+        final AtomicLong fakeElapsedTime = new AtomicLong(0);
+        ContainerManager containerManager = newContainerManager(fakeElapsedTime);
+
+        int targetTouchIndex = 5;
+        for (int i = 1; i <= nodeCount; i++) {
+            if (i == targetTouchIndex) {
+                zk.setData(path + targetTouchIndex, new byte[i], -1);
+            }
+            fakeElapsedTime.set(i * 100 + 1);
+            containerManager.checkContainers();
+            if (i == targetTouchIndex) {
+                assertNotNull("Ttl node path:" + (path + i) + " should have been deleted", zk.exists(path + i, false));
+            } else {
+                assertNull("Ttl node path:" + (path + i) + " should have been deleted", zk.exists(path + i, false));
+                if ((i + 1) <= nodeCount) {
+                    assertNotNull("Ttl node path:" + (path + (i + 1)) + " should not have been deleted", zk.exists(path + (i + 1), false));
+                }
+            }
+        }
+
+        fakeElapsedTime.set(targetTouchIndex * 100 + 1);
+        containerManager.checkContainers();
+        assertNull("Ttl node should have been deleted", zk.exists(path + targetTouchIndex, false));
+    }
+
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {
         return new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
