@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import static org.apache.jute.rpc.JuteRpcSpecialHandling.CONFIG_DATA_RESULT;
+import static org.apache.jute.rpc.JuteRpcSpecialHandling.STAT_RESULT;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.jute.Record;
+import org.apache.jute.rpc.JuteRpc;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
@@ -1571,6 +1574,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param scheme
      * @param auth
      */
+    @JuteRpc(30)
     public void addAuthInfo(String scheme, byte[] auth) {
         cnxn.addAuthInfo(scheme, auth);
     }
@@ -1813,6 +1817,7 @@ public class ZooKeeper implements AutoCloseable {
      * milliseconds and must be greater than 0 and less than or equal to
      * {@link EphemeralType#maxValue()} for {@link EphemeralType#TTL}.
      */
+    @JuteRpc(value = 31, responseName = "path", specialHandling = STAT_RESULT)
     public String create(
         final String path,
         byte[] data,
@@ -1973,6 +1978,7 @@ public class ZooKeeper implements AutoCloseable {
      *   return code.
      * @throws IllegalArgumentException if an invalid path is specified
      */
+    @JuteRpc(32)
     public void delete(final String path, int version) throws InterruptedException, KeeperException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
@@ -2267,6 +2273,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error
      * @throws InterruptedException If the server transaction is interrupted.
      */
+    @JuteRpc(33)
     public Stat exists(String path, boolean watch) throws KeeperException, InterruptedException {
         return exists(path, watch ? watchManager.defaultWatcher : null);
     }
@@ -2371,6 +2378,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero error code
      * @throws InterruptedException If the server transaction is interrupted.
      */
+    @JuteRpc(value = 34, responseName = "data", specialHandling = STAT_RESULT)
     public byte[] getData(String path, boolean watch, Stat stat) throws KeeperException, InterruptedException {
         return getData(path, watch ? watchManager.defaultWatcher : null, stat);
     }
@@ -2492,6 +2500,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero error code
      * @throws InterruptedException If the server transaction is interrupted.
      */
+    @JuteRpc(value = 35, responseName = "config", specialHandling = {STAT_RESULT, CONFIG_DATA_RESULT})
     public byte[] getConfig(boolean watch, Stat stat) throws KeeperException, InterruptedException {
         return getConfig(watch ? watchManager.defaultWatcher : null, stat);
     }
@@ -2533,6 +2542,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException if an invalid path is specified
      */
+    @JuteRpc(36)
     public Stat setData(final String path, byte[] data, int version) throws KeeperException, InterruptedException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
@@ -2590,6 +2600,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException if an invalid path is specified
      */
+    @JuteRpc(value = 37, responseName = "acls", specialHandling = STAT_RESULT)
     public List<ACL> getACL(final String path, Stat stat) throws KeeperException, InterruptedException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
@@ -2650,6 +2661,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
      * @throws IllegalArgumentException if an invalid path is specified
      */
+    @JuteRpc(38)
     public Stat setACL(final String path, List<ACL> acl, int aclVersion) throws KeeperException, InterruptedException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
@@ -2876,6 +2888,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
      */
+    @JuteRpc(value = 39, responseName = "children", specialHandling = STAT_RESULT)
     public List<String> getChildren(
         String path,
         boolean watch,
@@ -2931,6 +2944,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException
      * @throws InterruptedException
      */
+    @JuteRpc(value = 40, responseName = "totalNumber")
     public int getAllChildrenNumber(final String path) throws KeeperException, InterruptedException {
 
         final String clientPath = path;
@@ -2989,6 +3003,7 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.6.0
      *
      */
+    @JuteRpc(41)
     public List<String> getEphemerals(String prefixPath) throws KeeperException, InterruptedException {
         PathUtils.validatePath(prefixPath);
         RequestHeader h = new RequestHeader();
@@ -3136,6 +3151,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.5.0
      */
+    @JuteRpc(42)
     public void removeAllWatches(
         String path,
         WatcherType watcherType,
@@ -3196,6 +3212,7 @@ public class ZooKeeper implements AutoCloseable {
      *  error code.
      * @since 3.6.0
      */
+    @JuteRpc(43)
     public void addWatch(String basePath, AddWatchMode mode)
             throws KeeperException, InterruptedException {
         addWatch(basePath, watchManager.defaultWatcher, mode);

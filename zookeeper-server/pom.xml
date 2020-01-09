@@ -228,7 +228,24 @@
               <goal>compile</goal>
             </goals>
           </execution>
+          <execution>
+          </execution>
         </executions>
+        <configuration>
+          <annotationProcessorPaths>
+            <annotationProcessorPath>
+              <groupId>org.apache.zookeeper</groupId>
+              <artifactId>zookeeper-jute</artifactId>
+              <version>${project.version}</version>
+            </annotationProcessorPath>
+          </annotationProcessorPaths>
+          <annotationProcessors>
+            <annotationProcessor>org.apache.jute.rpc.JuteRpcProcessor</annotationProcessor>
+          </annotationProcessors>
+          <compilerArgs>
+            <arg>-implicit:none</arg>
+          </compilerArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -275,7 +292,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -292,6 +308,24 @@
             <build.test.dir>${project.build.directory}/surefire</build.test.dir>
             <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
           </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includes>
+            <include>**/*.proto</include>
+          </includes>
+          <resourcesDirectory>${project.build.directory}/classes</resourcesDirectory>
         </configuration>
       </plugin>
     </plugins>
