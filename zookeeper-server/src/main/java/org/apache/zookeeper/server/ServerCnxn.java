@@ -44,6 +44,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.slf4j.Logger;
@@ -140,7 +141,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     private volatile boolean invalid = false;
 
-    abstract int getSessionTimeout();
+    public abstract int getSessionTimeout();
 
     public void incrOutstandingAndCheckThrottle(RequestHeader h) {
         if (h.getXid() <= 0) {
@@ -269,7 +270,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract long getSessionId();
 
-    abstract void setSessionId(long sessionId);
+    public abstract void setSessionId(long sessionId);
 
     /** auth info for the cnxn, returns an unmodifyable list */
     public List<Id> getAuthInfo() {
@@ -284,21 +285,41 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return authInfo.remove(id);
     }
 
-    abstract void sendBuffer(ByteBuffer... buffers);
+    public void sendConnectResponse(boolean valid, byte[] password, boolean isReadOnly) throws IOException {
+        ConnectResponse rsp = new ConnectResponse(
+                0,
+                valid ? getSessionTimeout() : 0,
+                valid ? getSessionId() : 0, // send 0 if session is no
+                // longer valid
+                password);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
+        bos.writeInt(-1, "len");
+        rsp.serialize(bos, "connect");
+        if (!isOldClient) {
+            bos.writeBool(isReadOnly, "readOnly");
+        }
+        baos.close();
+        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+        bb.putInt(bb.remaining() - 4).rewind();
+        sendBuffer(bb);
+    }
+
+    public abstract void sendBuffer(ByteBuffer... buffers);
 
     public void sendCloseConnection() {
         sendBuffer(ServerCnxnFactory.closeConn);
     }
 
-    abstract void enableRecv();
+    public abstract void enableRecv();
 
     void disableRecv() {
         disableRecv(true);
     }
 
-    abstract void disableRecv(boolean waitDisableRecv);
+    public abstract void disableRecv(boolean waitDisableRecv);
 
-    abstract void setSessionTimeout(int sessionTimeout);
+    public abstract void setSessionTimeout(int sessionTimeout);
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 

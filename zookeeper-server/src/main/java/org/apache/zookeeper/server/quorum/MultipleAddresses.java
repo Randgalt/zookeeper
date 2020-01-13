@@ -107,6 +107,10 @@ public final class MultipleAddresses {
         return addresses.stream().map(InetSocketAddress::getHostString).distinct().collect(Collectors.toList());
     }
 
+    public Duration getTimeout() {
+        return timeout;
+    }
+
     public void addAddress(InetSocketAddress address) {
         addresses.add(address);
     }

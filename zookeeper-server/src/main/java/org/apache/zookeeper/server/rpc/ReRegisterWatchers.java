@@ -10,5 +10,6 @@ class ReRegisterWatchers {
                                    Set<String> dataWatches,
                                    Set<String> existWatches,
                                    Set<String> childWatches,
-                                   Set<String> persistentWatches, Set<String> persistentRecursiveWatches);
+                                   Set<String> persistentWatches,
+                                   Set<String> persistentRecursiveWatches);
 }

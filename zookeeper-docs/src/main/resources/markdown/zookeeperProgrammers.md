@@ -633,7 +633,7 @@ to consider in this definition of a watch:
 
 Watches are maintained locally at the ZooKeeper server to which the
 client is connected. This allows watches to be lightweight to set,
-maintain, and dispatch. When a client connects to a new server, the watch
+maintain, and requestMapper. When a client connects to a new server, the watch
 will be triggered for any session events. Watches will not be received
 while disconnected from a server. When a client reconnects, any previously
 registered watches will be reregistered and triggered if needed. In
@@ -1360,7 +1360,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
 The C binding has a single-threaded and multi-threaded library.
 The multi-threaded library is easiest to use and is most similar to the
-Java API. This library will create an IO thread and an event dispatch
+Java API. This library will create an IO thread and an event requestMapper
 thread for handling connection maintenance and callbacks. The
 single-threaded library allows ZooKeeper to be used in event driven
 applications by exposing the event loop used in the multi-threaded

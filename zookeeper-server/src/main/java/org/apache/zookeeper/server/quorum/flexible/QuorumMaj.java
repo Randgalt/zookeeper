@@ -157,4 +157,7 @@ public class QuorumMaj implements QuorumVerifier {
         version = ver;
     }
 
+    public int getHalf() {
+        return half;
+    }
 }

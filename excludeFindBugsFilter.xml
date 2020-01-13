@@ -17,5 +17,9 @@
         </Or>
         <Bug pattern="UUF_UNUSED_FIELD"/>
     </Match>
+
+    <Match>
+        <Class name="~org\.apache\.zookeeper\.rpc\.generated.*"/>
+    </Match>
 </FindBugsFilter>
 
