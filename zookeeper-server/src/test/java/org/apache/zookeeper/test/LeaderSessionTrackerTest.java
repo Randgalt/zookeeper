@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayOutputStream;
@@ -100,7 +101,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Fake session Id: {}", Long.toHexString(fakeSessionId));
 
-        Request request = new Request(null, fakeSessionId, 0, OpCode.create, bb, new ArrayList<Id>());
+        Request request = new Request(null, fakeSessionId, 0, OpCode.create, fromBytes(bb), new ArrayList<Id>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);
@@ -138,7 +139,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Local session Id: {}", Long.toHexString(locallSession));
 
-        Request request = new Request(null, locallSession, 0, OpCode.create, bb, new ArrayList<Id>());
+        Request request = new Request(null, locallSession, 0, OpCode.create, fromBytes(bb), new ArrayList<>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -109,7 +110,7 @@ public class PrepRequestProcessorTest extends ClientBase {
     public void testPRequest() throws Exception {
         pLatch = new CountDownLatch(1);
         processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
-        Request foo = new Request(null, 1L, 1, OpCode.create, ByteBuffer.allocate(3), null);
+        Request foo = new Request(null, 1L, 1, OpCode.create, fromBytes(ByteBuffer.allocate(3)), null);
         processor.pRequest(foo);
 
         assertEquals("Request should have marshalling error", new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()), outcome.getTxn());
@@ -136,7 +137,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         baos.close();
         // Id
         List<Id> ids = Arrays.asList(admin ? new Id("super", "super user") : Ids.ANYONE_ID_UNSAFE);
-        return new Request(null, sessionId, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
+        return new Request(null, sessionId, 0, opCode, fromBytes(ByteBuffer.wrap(baos.toByteArray())), ids);
     }
 
     private void process(List<Op> ops) throws Exception {

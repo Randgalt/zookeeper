@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
@@ -65,7 +66,7 @@ public class SyncRequestProcessorMetricTest {
     }
 
     private Request createRquest(long sessionId, int xid) {
-        return new Request(null, sessionId, xid, ZooDefs.OpCode.setData, ByteBuffer.wrap(new byte[10]), null);
+        return new Request(null, sessionId, xid, ZooDefs.OpCode.setData, fromBytes(ByteBuffer.wrap(new byte[10])), null);
     }
 
     @Test

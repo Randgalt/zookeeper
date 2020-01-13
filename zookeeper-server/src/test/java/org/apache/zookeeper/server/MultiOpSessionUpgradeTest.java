@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +38,6 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -115,7 +115,7 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         GetDataRequest getDataRequest = new GetDataRequest(path, false);
         getDataRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.getData, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, 1, ZooDefs.OpCode.getData, fromBytes(bb), new ArrayList<>());
     }
 
     private Request makeCreateRequest(String path, long sessionId) throws IOException {
@@ -124,7 +124,7 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         CreateRequest createRequest = new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         createRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, fromBytes(bb), new ArrayList<>());
     }
 
     private QuorumZooKeeperServer getConnectedServer(long sessionId) {

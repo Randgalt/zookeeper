@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -160,7 +161,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                         + (++nodeId), new byte[0], Ids.OPEN_ACL_UNSAFE, 1);
             createReq.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.create, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.create, fromBytes(bb), new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
 
         }
@@ -174,7 +175,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                                + nodeId, false);
             getDataRequest.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, fromBytes(bb), new ArrayList<>());
             zks.getFirstProcessor().processRequest(req);
         }
 

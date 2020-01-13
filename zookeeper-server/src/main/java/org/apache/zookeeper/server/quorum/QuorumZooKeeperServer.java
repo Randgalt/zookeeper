@@ -18,12 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiOperationRecord;
@@ -31,7 +33,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.apache.zookeeper.proto.CreateSessionRequest;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -72,10 +74,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         }
 
         if (OpCode.multi == request.type) {
-            MultiOperationRecord multiTransactionRecord = new MultiOperationRecord();
-            request.request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
-            request.request.rewind();
+            request.request.reset();
+            MultiOperationRecord multiTransactionRecord = request.request.readRecord(MultiOperationRecord.class);
+            request.request.reset();
             boolean containsEphemeralCreate = false;
             for (Op op : multiTransactionRecord) {
                 if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
@@ -91,10 +92,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 return null;
             }
         } else {
-            CreateRequest createRequest = new CreateRequest();
-            request.request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-            request.request.rewind();
+            request.request.reset();
+            CreateRequest createRequest = request.request.readRecord(CreateRequest.class);
+            request.request.reset();
             CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
             if (!createMode.isEphemeral()) {
                 return null;
@@ -115,10 +115,17 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // avoid another thread upgrading the session in parallel.
         synchronized (upgradeableSessionTracker) {
             if (upgradeableSessionTracker.isLocalSession(sessionId)) {
-                int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
-                ByteBuffer to = ByteBuffer.allocate(4);
-                to.putInt(timeout);
-                return new Request(null, sessionId, 0, OpCode.createSession, to, null);
+                try {
+                    int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                    CreateSessionRequest createSessionRequest = new CreateSessionRequest(timeout);
+                    createSessionRequest.serialize(boa, "request");
+                    return new Request(null, sessionId, 0, OpCode.createSession, fromBytes(baos.toByteArray()), null);
+                } catch (IOException e) {
+                    // should never happen
+                    throw new Error("Unexpected error when serializing", e);
+                }
             }
         }
         return null;

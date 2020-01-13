@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
@@ -99,7 +100,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         record.serialize(boa, "request");
         baos.close();
-        return new Request(null, 1L, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), null);
+        return new Request(null, 1L, 0, opCode, fromBytes(ByteBuffer.wrap(baos.toByteArray())), null);
     }
 
     private Request createRequest(String path, int opCode) throws IOException {

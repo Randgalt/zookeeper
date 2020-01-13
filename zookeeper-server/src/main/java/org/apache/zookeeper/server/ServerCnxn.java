@@ -286,6 +286,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     abstract void sendBuffer(ByteBuffer... buffers);
 
+    public void sendCloseConnection() {
+        sendBuffer(ServerCnxnFactory.closeConn);
+    }
+
     abstract void enableRecv();
 
     void disableRecv() {

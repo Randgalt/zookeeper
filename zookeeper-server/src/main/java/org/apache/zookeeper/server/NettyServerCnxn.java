@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.CompositeByteBuf;
@@ -470,7 +471,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         if (initialized) {
                             // TODO: if zks.processPacket() is changed to take a ByteBuffer[],
                             // we could implement zero-copy queueing.
-                            zks.processPacket(this, bb);
+                            zks.processPacket(this, fromBytes(bb));
                         } else {
                             LOG.debug("got conn req request from {}", getRemoteSocketAddress());
                             zks.processConnectRequest(this, bb);

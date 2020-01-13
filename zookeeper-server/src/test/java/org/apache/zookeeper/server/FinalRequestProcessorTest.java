@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -96,7 +97,7 @@ public class FinalRequestProcessorTest {
         // Arrange
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), new ArrayList<>());
         processor.processRequest(r);
 
         // Assert
@@ -109,7 +110,7 @@ public class FinalRequestProcessorTest {
         testACLs.remove(2);
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), new ArrayList<>());
         processor.processRequest(r);
 
         // Assert
@@ -123,7 +124,7 @@ public class FinalRequestProcessorTest {
         authInfo.add(new Id("digest", "otheruser:somesecrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -137,7 +138,7 @@ public class FinalRequestProcessorTest {
         authInfo.add(new Id("digest", "user:secrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -151,7 +152,7 @@ public class FinalRequestProcessorTest {
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -167,7 +168,7 @@ public class FinalRequestProcessorTest {
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert

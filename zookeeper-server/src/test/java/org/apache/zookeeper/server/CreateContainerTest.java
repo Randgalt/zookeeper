@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +43,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.DeleteContainerRequest;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
 
@@ -211,7 +213,12 @@ public class CreateContainerTest extends ClientBase {
         RequestProcessor processor = new RequestProcessor() {
             @Override
             public void processRequest(Request request) {
-                queue.add(new String(request.request.array()));
+                try {
+                    DeleteContainerRequest deleteContainerRequest = request.request.readRecord(DeleteContainerRequest.class);
+                    queue.add(deleteContainerRequest.getPath());
+                } catch (IOException e) {
+                    throw new Error(e);
+                }
             }
 
             @Override

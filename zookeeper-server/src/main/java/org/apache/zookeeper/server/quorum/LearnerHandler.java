@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -691,7 +692,7 @@ public class LearnerHandler extends ZooKeeperThread {
                     if (type == OpCode.sync) {
                         si = new LearnerSyncRequest(this, sessionId, cxid, type, bb, qp.getAuthinfo());
                     } else {
-                        si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
+                        si = new Request(null, sessionId, cxid, type, fromBytes(bb), qp.getAuthinfo());
                     }
                     si.setOwner(this);
                     learnerMaster.submitLearnerRequest(si);

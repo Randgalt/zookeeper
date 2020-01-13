@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertEquals;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         PrepRequestProcessor processor = new MyPrepRequestProcessor();
         processor.start();
 
-        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, ByteBuffer.wrap(new byte[10]), null));
+        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, fromBytes(ByteBuffer.wrap(new byte[10])), null));
         processed.await();
 
         processor.shutdown();

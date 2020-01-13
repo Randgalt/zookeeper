@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -220,7 +221,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
              * Add a request so that something is there for SyncRequestProcessor
              * to process, while we are in shutdown flow
              */
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.delete, ByteBuffer.wrap("/deadLockIssue".getBytes()), null);
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.delete, fromBytes(ByteBuffer.wrap("/deadLockIssue".getBytes())), null);
             processRequest(request);
             super.shutdown();
         }

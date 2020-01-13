@@ -32,7 +32,6 @@ import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ public final class AuditHelper {
         if (!ZKAuditProvider.isAuditEnabled()) {
             return;
         }
-        String op = null;
+        String op;
         //For failed transaction rc.path is null
         String path = txnResult.path;
         String acls = null;
@@ -71,8 +70,7 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.createContainer:
                     op = AuditConstants.OP_CREATE;
                     if (failedTxn) {
-                        CreateRequest createRequest = new CreateRequest();
-                        deserialize(request, createRequest);
+                        CreateRequest createRequest = deserialize(request, CreateRequest.class);
                         path = createRequest.getPath();
                         createMode =
                                 getCreateMode(createRequest);
@@ -84,24 +82,21 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.deleteContainer:
                     op = AuditConstants.OP_DELETE;
                     if (failedTxn) {
-                        DeleteRequest deleteRequest = new DeleteRequest();
-                        deserialize(request, deleteRequest);
+                        DeleteRequest deleteRequest = deserialize(request, DeleteRequest.class);
                         path = deleteRequest.getPath();
                     }
                     break;
                 case ZooDefs.OpCode.setData:
                     op = AuditConstants.OP_SETDATA;
                     if (failedTxn) {
-                        SetDataRequest setDataRequest = new SetDataRequest();
-                        deserialize(request, setDataRequest);
+                        SetDataRequest setDataRequest = deserialize(request, SetDataRequest.class);
                         path = setDataRequest.getPath();
                     }
                     break;
                 case ZooDefs.OpCode.setACL:
                     op = AuditConstants.OP_SETACL;
                     if (failedTxn) {
-                        SetACLRequest setACLRequest = new SetACLRequest();
-                        deserialize(request, setACLRequest);
+                        SetACLRequest setACLRequest = deserialize(request, SetACLRequest.class);
                         path = setACLRequest.getPath();
                         acls = ZKUtil.aclToString(setACLRequest.getAcl());
                     } else {
@@ -131,9 +126,9 @@ public final class AuditHelper {
         }
     }
 
-    private static void deserialize(Request request, Record record) throws IOException {
-        request.request.rewind();
-        ByteBufferInputStream.byteBuffer2Record(request.request.slice(), record);
+    private static <T extends Record> T deserialize(Request request, Class<T> recordClass) throws IOException {
+        request.request.reset();
+        return request.request.tempRequestPacket().readRecord(recordClass);
     }
 
     private static Result getResult(ProcessTxnResult rc, boolean failedTxn) {
@@ -189,14 +184,12 @@ public final class AuditHelper {
     }
 
     private static String getACLs(Request request) throws IOException {
-        SetACLRequest setACLRequest = new SetACLRequest();
-        deserialize(request, setACLRequest);
+        SetACLRequest setACLRequest = deserialize(request, SetACLRequest.class);
         return ZKUtil.aclToString(setACLRequest.getAcl());
     }
 
     private static String getCreateMode(Request request) throws IOException, KeeperException {
-        CreateRequest createRequest = new CreateRequest();
-        deserialize(request, createRequest);
+        CreateRequest createRequest = deserialize(request, CreateRequest.class);
         return getCreateMode(createRequest);
     }
 
@@ -210,8 +203,7 @@ public final class AuditHelper {
         if (!ZKAuditProvider.isAuditEnabled()) {
             return createModes;
         }
-        MultiOperationRecord multiRequest = new MultiOperationRecord();
-        deserialize(request, multiRequest);
+        MultiOperationRecord multiRequest = deserialize(request, MultiOperationRecord.class);
         for (Op op : multiRequest) {
             if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2
                     || op.getType() == ZooDefs.OpCode.createContainer) {

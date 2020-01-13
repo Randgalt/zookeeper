@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
@@ -27,6 +26,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.packet.RequestPacket;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnDigest;
@@ -49,12 +49,12 @@ public class Request {
     // associated session timeout. Disabled by default.
     private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
 
-    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
+    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, RequestPacket requestPacket, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;
         this.cxid = xid;
         this.type = type;
-        this.request = bb;
+        this.request = requestPacket;
         this.authInfo = authInfo;
     }
 
@@ -76,7 +76,7 @@ public class Request {
 
     public final int type;
 
-    public final ByteBuffer request;
+    public final RequestPacket request;
 
     public final ServerCnxn cnxn;
 
@@ -374,19 +374,9 @@ public class Request {
             && type != OpCode.setWatches
             && type != OpCode.setWatches2
             && type != OpCode.closeSession
-            && request != null
-            && request.remaining() >= 4) {
+            && request != null) {
             try {
-                // make sure we don't mess with request itself
-                ByteBuffer rbuf = request.asReadOnlyBuffer();
-                rbuf.clear();
-                int pathLen = rbuf.getInt();
-                // sanity check
-                if (pathLen >= 0 && pathLen < 4096 && rbuf.remaining() >= pathLen) {
-                    byte[] b = new byte[pathLen];
-                    rbuf.get(b);
-                    path = new String(b);
-                }
+                path = request.toString();
             } catch (Exception e) {
                 // ignore - can't find the path, will output "n/a" instead
             }
@@ -444,7 +434,7 @@ public class Request {
      */
     public String getUsers() {
         if (authInfo == null) {
-            return (String) null;
+            return null;
         }
         if (authInfo.size() == 1) {
             return AuthUtil.getUser(authInfo.get(0));

@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.nio.ByteBuffer;
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,8 +27,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.proto.DeleteContainerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,9 +131,12 @@ public class ContainerManager {
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
-            ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                DeleteContainerRequest deleteContainerRequest = new DeleteContainerRequest(containerPath);
+                deleteContainerRequest.serialize(boa, "request");
+                Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, fromBytes(baos.toByteArray()), null);
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
                 postDeleteRequest(request);
             } catch (Exception e) {

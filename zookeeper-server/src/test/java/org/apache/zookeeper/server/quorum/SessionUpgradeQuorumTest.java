@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -37,9 +38,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
@@ -319,10 +318,9 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
                             }
 
                             if (request.type == ZooDefs.OpCode.create && request.cnxn != null) {
-                                CreateRequest createRequest = new CreateRequest();
-                                request.request.rewind();
-                                ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-                                request.request.rewind();
+                                request.request.reset();
+                                CreateRequest createRequest = request.request.readRecord(CreateRequest.class);
+                                request.request.reset();
                                 try {
                                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                                     if (createMode.isEphemeral()) {
@@ -359,7 +357,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         CreateRequest createRequest = new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         createRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, fromBytes(bb), new ArrayList<>());
     }
 
 }

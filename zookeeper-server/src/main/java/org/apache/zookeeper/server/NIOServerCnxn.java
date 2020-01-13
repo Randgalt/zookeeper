@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -376,7 +377,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     private void readRequest() throws IOException {
-        zkServer.processPacket(this, incomingBuffer);
+        zkServer.processPacket(this, fromBytes(incomingBuffer));
     }
 
     // returns whether we are interested in writing, which is determined

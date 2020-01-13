@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -37,7 +38,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
@@ -128,7 +128,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
         rec.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, xid, type, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, xid, type, fromBytes(bb), new ArrayList<>());
     }
 
     /**

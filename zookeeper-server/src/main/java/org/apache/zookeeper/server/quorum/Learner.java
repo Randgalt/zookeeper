@@ -205,11 +205,9 @@ public class Learner {
         oa.writeInt(request.cxid);
         oa.writeInt(request.type);
         if (request.request != null) {
-            request.request.rewind();
-            int len = request.request.remaining();
-            byte[] b = new byte[len];
-            request.request.get(b);
-            request.request.rewind();
+            request.request.reset();
+            byte[] b = request.request.toByteRequest();
+            request.request.reset();
             oa.write(b);
         }
         oa.close();

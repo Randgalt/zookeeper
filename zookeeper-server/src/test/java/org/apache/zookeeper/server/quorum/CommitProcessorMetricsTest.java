@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.packet.RequestPacket.fromBytes;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
@@ -192,11 +193,11 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     }
 
     private Request createReadRequest(long sessionId, int xid) {
-        return new Request(null, sessionId, xid, ZooDefs.OpCode.getData, ByteBuffer.wrap(new byte[10]), null);
+        return new Request(null, sessionId, xid, ZooDefs.OpCode.getData, fromBytes(ByteBuffer.wrap(new byte[10])), null);
     }
 
     private Request createWriteRequest(long sessionId, int xid) {
-        return new Request(null, sessionId, xid, ZooDefs.OpCode.setData, ByteBuffer.wrap(new byte[10]), null);
+        return new Request(null, sessionId, xid, ZooDefs.OpCode.setData, fromBytes(ByteBuffer.wrap(new byte[10])), null);
     }
 
     private void processRequestWithWait(Request request) throws Exception {
